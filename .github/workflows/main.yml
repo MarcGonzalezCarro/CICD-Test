@@ -1,13 +1,12 @@
 name: Build
 on: 
   push:
-    branches:
-    - main
+    tags:
+      - 'v*.*.*'
 
 jobs: 
   build:
-    runs-on:
-      windows-latest
+    runs-on: windows-latest
       
     steps:
     - name: Checkout
@@ -20,16 +19,32 @@ jobs:
       run: msbuild .\PhysicsGame.sln /p:Configuration=Release
 
     - name: Create Artifact Directory
-      run: mkdir artifact/PhysicsGame
+      run: mkdir artifact\PhysicsGame
 
     - name: Copy the executable to the artifact directory
-      run: copy ./Build/PhysicsGame/Release/Win32/PhysicsGame.exe ./artifact/PhysicsGame/
-      
+      run: copy .\Build\PhysicsGame\Release\Win32\PhysicsGame.exe artifact\PhysicsGame\
+
     - name: Upload Artifact
       uses: actions/upload-artifact@v4.6.2
       with:
-        path: ./artifact/PhysicsGame/
-      
-    
-  
-    
+        name: physicsgame-build
+        path: artifact/PhysicsGame/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+    - name: Download a Build Artifact
+      uses: actions/download-artifact@v5.0.0
+      with:
+        name: physicsgame-build
+        path: artifact/PhysicsGame/
+
+    - name: Upload to GitHub Release
+      uses: fnkr/github-action-ghr@v1.3
+      env:
+        GHR_COMPRESS: xz
+        GHR_PATH: artifact/PhysicsGame/
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
