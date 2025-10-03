@@ -1,0 +1,20 @@
+name: Build
+on: 
+  push:
+    branches:
+    - main
+
+jobs: 
+  build:
+    runs-on:
+      window-latest
+      
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5.0.0
+     
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Build Solution
+      run: msbuild .\PhysicsGame.sln /p:Configuration=Release
